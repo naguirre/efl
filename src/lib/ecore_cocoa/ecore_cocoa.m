@@ -309,7 +309,28 @@ ecore_cocoa_feed_events(void)
       }
       case NSScrollWheel:
       {
-         printf("Scroll Wheel\n");
+         printf("Scroll Wheel %lf\n", [event scrollingDeltaY]);
+         Ecore_Event_Mouse_Wheel *ev;
+
+         ev = calloc(1, sizeof(Ecore_Event_Mouse_Wheel));
+         if (!ev) return;
+
+         EcoreCocoaWindow *window = (EcoreCocoaWindow *)[event window];
+         NSView *view = [window contentView];
+         NSPoint pt = [event locationInWindow];
+
+         ev->x = pt.x;
+         ev->y = [view frame].size.height - pt.y;
+         ev->root.x = ev->x;
+         ev->root.y = ev->y;
+         ev->timestamp = time;
+         ev->window = window.ecore_window_data;
+         ev->event_window = ev->window;
+         ev->direction = 0;
+         if ([event scrollingDeltaY])
+            ev->z = [event scrollingDeltaY] > 0 ? -1 : 1;
+
+         ecore_event_add(ECORE_EVENT_MOUSE_WHEEL, ev, NULL, NULL);
          break;
       }
       default:
